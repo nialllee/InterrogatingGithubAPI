@@ -31,3 +31,48 @@ gitDF = jsonlite::fromJSON(jsonlite::toJSON(json1))
 
 # Subset data.frame
 gitDF[gitDF$full_name == "jtleek/datasharing", "created_at"] 
+
+#first analysis of my own profile
+myProfile = fromJSON("https://api.github.com/users/nialllee")
+myProfile$followers
+myProfile$public_repos
+
+myFollowers = fromJSON("https://api.github.com/users/nialllee/followers")
+myFollowers$login
+length = length(myFollowers$login)
+length #Number of followers
+
+myProfile$following
+following = fromJSON("https://api.github.com/users/nialllee/following")
+following$login
+
+repository = fromJSON("https://api.github.com/users/nialllee/repos")
+repository$name
+repository$created_at
+
+myProfile$bio
+
+# browser view of json
+myProfileJSon = toJSON(myProfile, pretty = TRUE)
+myProfileJSon
+
+#Grant's profile
+arnottgProfile = fromJSON("https://api.github.com/users/arnottg")
+arnottgProfile$followers
+arnottgProfile$following
+arnottgProfile$public_repos
+
+#OTHER USER
+#below I am going to interrogate another user and put there data into a data.frame
+#analysis of a very active user stefanprodan (found on trending)
+prodanProfile = GET("https://api.github.com/users/stefanprodan/followers?per_page=100;", gtoken)
+stop_for_status(prodanProfile)
+
+# get content from prodan's profile
+extract = content(prodanProfile)
+
+# Convert content to dataframe
+githubDB = jsonlite::fromJSON(jsonlite::toJSON(extract))
+
+# Subset dataframe
+githubDB$login
