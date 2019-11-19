@@ -76,3 +76,95 @@ githubDB = jsonlite::fromJSON(jsonlite::toJSON(extract))
 
 # Subset dataframe
 githubDB$login
+
+#PLOTS
+#Gets a username list
+id = githubDB$login
+user_ids = c(id)
+
+#make a data.frame and empty vector
+users = c()
+usersDB = data.frame(
+  username = integer(),
+  following = integer(),
+  followers = integer(),
+  repos = integer(),
+  dateCreated = integer()
+)
+
+#scans through users and adds them to the list
+for(i in 1:length(user_ids))
+{
+  
+  followingURL = paste("https://api.github.com/users/", user_ids[i], "/following", sep = "")
+  followingRequest = GET(followingURL, gtoken)
+  followingContent = content(followingRequest)
+  
+  #Disregards followers with zero followers
+  if(length(followingContent) == 0)
+  {
+    next
+  }
+  
+  followingDF = jsonlite::fromJSON(jsonlite::toJSON(followingContent))
+  followingLogin = followingDF$login
+  
+  #scans through following
+  for (j in 1:length(followingLogin))
+  {
+    #ensures no duplicates
+    if (is.element(followingLogin[j], users) == FALSE)
+    {
+      #Adds user to list
+      users[length(users) + 1] = followingLogin[j]
+      
+      #gets user information
+      followingUrl2 = paste("https://api.github.com/users/", followingLogin[j], sep = "")
+      following2 = GET(followingUrl2, gtoken)
+      followingContent2 = content(following2)
+      followingDF2 = jsonlite::fromJSON(jsonlite::toJSON(followingContent2))
+      
+      #gets user's following
+      followingNumber = followingDF2$following
+      
+      #gets users followers
+      followersNumber = followingDF2$followers
+      
+      #gets users number of repos 
+      reposNumber = followingDF2$public_repos
+      
+      #gets year user joined github
+      yearCreated = substr(followingDF2$created_at, start = 1, stop = 4)
+      
+      #Adds user info to a new data frame row
+      usersDB[nrow(usersDB) + 1, ] = c(followingLogin[j], followingNumber, followersNumber, reposNumber, yearCreated)
+      
+    }
+    next
+  }
+  if(length(users) > 150)
+  {
+    break
+  }
+  next
+}
+
+#PLOT1
+#Plotly details
+Sys.setenv("plotly_username"="leen1")
+Sys.setenv("plotly_api_key"="••••••••••")
+
+#repositories vs followers year by year
+plot1 = plot_ly(data = usersDB, x = ~repos, y = ~followers, text = ~paste("Followers: ", followers, "<br>Repositories: ", repos, "<br>Date Created:", dateCreated), color = ~dateCreated)
+plot1
+
+#upload to plotly
+api_create(plot1, filename = "Repositories vs Followers")
+
+#PLOT2
+#following vs followers year by year
+plot2 = plot_ly(data = usersDB, x = ~following, y = ~followers, text = ~paste("Followers: ", followers, "<br>Following: ", following), color = ~dateCreated)
+plot2
+
+#upload to plotly
+api_create(plot2, filename = "Following vs Followers")
