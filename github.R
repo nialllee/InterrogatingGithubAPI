@@ -168,3 +168,54 @@ plot2
 
 #upload to plotly
 api_create(plot2, filename = "Following vs Followers")
+
+#PLOT3
+#I will now plot the top languages used by the 150 users above.
+languages = c()
+
+for (i in 1:length(users))
+{
+  RepositoriesUrl = paste("https://api.github.com/users/", users[i], "/repos", sep = "")
+  Repositories = GET(RepositoriesUrl, gtoken)
+  RepositoriesContent = content(Repositories)
+  RepositoriesDF = jsonlite::fromJSON(jsonlite::toJSON(RepositoriesContent))
+  RepositoriesNames = RepositoriesDF$name
+  
+  #Loop through users repos
+  for (j in 1: length(RepositoriesNames))
+  {
+    #add repos to data frame
+    RepositoriesUrl2 = paste("https://api.github.com/repos/", users[i], "/", RepositoriesNames[j], sep = "")
+    Repositories2 = GET(RepositoriesUrl2, gtoken)
+    RepositoriesContent2 = content(Repositories2)
+    RepositoriesDF2 = jsonlite::fromJSON(jsonlite::toJSON(RepositoriesContent2))
+    language = RepositoriesDF2$language
+    
+    #Removes repos with unknown languages
+    if (length(language) != 0 && language != "<NA>")
+    {
+      languages[length(languages)+1] = language
+    }
+    next
+  }
+  next
+}
+
+#tables the top languages
+allLanguages = sort(table(languages), increasing=TRUE)
+
+top10Languages = allLanguages[(length(allLanguages)-9):length(allLanguages)] 
+
+#converts to dataframe
+languageDF = as.data.frame(top10Languages)
+
+#Plot data frame
+plot3 = plot_ly(data = languageDF, x = languageDF$languages, y = languageDF$Freq, type = "bar")
+plot3
+
+Sys.setenv("plotly_username"="leen1")
+Sys.setenv("plotly_api_key"="IIeUKBRn1wLrFXxzUmyq")
+api_create(plot3, filename = "10 Most Popular Languages")
+
+#In this plot Javascript is the most popular language and C is the least popular
+
